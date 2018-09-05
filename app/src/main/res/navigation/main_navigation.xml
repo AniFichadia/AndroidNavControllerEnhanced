@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/demoFragment1">
+
+    <fragment
+        android:id="@+id/demoFragment1"
+        android:name="com.anifichadia.androidnavcontrollerenhanced.DemoFragment1"
+        android:label="DemoFragment1"
+        tools:layout="@layout/fragment_demo_fragment_1">
+
+        <action
+            android:id="@+id/action_demoFragment1_to_demoFragment2"
+            app:destination="@id/demoFragment2"/>
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/demoFragment2"
+        android:name="com.anifichadia.androidnavcontrollerenhanced.DemoFragment2"
+        android:label="DemoFragment2"
+        tools:layout="@layout/fragment_demo_fragment_2">
+
+        <action
+            android:id="@+id/action_demoFragment2_to_demoWithResultActivity"
+            app:destination="@id/demoWithResultActivity"/>
+
+    </fragment>
+
+    <!--
+    TODO: Add the request code to the node so it can be picked up when the NavGraph is inflated
+    -->
+    <activity
+        android:id="@+id/demoWithResultActivity"
+        android:name="com.anifichadia.androidnavcontrollerenhanced.DemoWithResultActivity"
+        android:label="DemoWithResultActivity"
+        app:requestCode="@integer/request_code_demo_with_result"
+        tools:layout="@layout/activity_demo_with_result"/>
+
+</navigation>

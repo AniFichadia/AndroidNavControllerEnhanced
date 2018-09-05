@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TODO: Define an integer value for the requestCode -->
+    <integer name="request_code_demo_with_result">325</integer>
+</resources>

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Android Nav Controller Enhanced Demo</string>
+
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
+
+    <string name="result_ok">OK result</string>
+    <string name="result_cancelled">Cancelled result</string>
+</resources>
