@@ -1,12 +1,9 @@
 package com.anifichadia.androidnavcontrollerenhanced
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
+class MainActivity : NavHostActivity() {
+    override val navGraphResId: Int = R.navigation.main_navigation
 
-class MainActivity : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override val defaultDefaultDestinationTitle: CharSequence by lazy {
+        getString(R.string.app_name)
     }
 }
