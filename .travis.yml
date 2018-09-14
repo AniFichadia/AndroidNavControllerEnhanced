@@ -16,6 +16,9 @@ android:
 
 script: ./gradlew lib:clean lib:test lib:build
 
+after_success:
+- .buildscript/deploy_snapshot.sh
+
 
 env:
   global:

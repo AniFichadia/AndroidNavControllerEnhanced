@@ -1,0 +1,227 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+
+version = VERSION
+group = GROUP
+
+
+def isReleaseBuild() {
+    return !VERSION.contains("SNAPSHOT")
+}
+
+def getReleaseRepositoryUrl() {
+    if (hasProperty('REPOSITORY_URL_RELEASE')) {
+        return REPOSITORY_URL_RELEASE
+    } else if (System.env.REPOSITORY_URL_RELEASE != null) {
+        return System.env.REPOSITORY_URL_RELEASE
+    } else {
+        return "https://oss.jfrog.org/artifactory/oss-release-local/"
+    }
+}
+
+def getSnapshotRepositoryUrl() {
+    if (hasProperty('REPOSITORY_URL_SNAPSHOT')) {
+        return REPOSITORY_URL_SNAPSHOT
+    } else if (System.env.REPOSITORY_URL_SNAPSHOT != null) {
+        return System.env.REPOSITORY_URL_SNAPSHOT
+    } else {
+        return "https://oss.jfrog.org/artifactory/oss-snapshot-local/"
+    }
+}
+
+def getRepositoryUsername() {
+    if (hasProperty('REPOSITORY_USERNAME')) {
+        return REPOSITORY_USERNAME
+    } else if (System.env.REPOSITORY_USERNAME != null) {
+        return System.env.REPOSITORY_USERNAME
+    } else {
+        return ""
+    }
+}
+
+def getRepositoryPassword() {
+    if (hasProperty('REPOSITORY_PASSWORD')) {
+        return REPOSITORY_PASSWORD
+    } else if (System.env.REPOSITORY_PASSWORD != null) {
+        return System.env.REPOSITORY_PASSWORD
+    } else {
+        return ""
+    }
+}
+
+afterEvaluate { project ->
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                pom.groupId = GROUP
+                pom.artifactId = ARTIFACT_ID
+                pom.version = VERSION
+
+                repository(url: getReleaseRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+                snapshotRepository(url: getSnapshotRepositoryUrl()) {
+                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+                }
+
+                pom.project {
+                    name NAME
+                    packaging PACKAGING
+                    description DESCRIPTION
+                    url PROJECT_URL
+
+                    scm {
+                        url SCM_URL
+                        connection SCM_CONNECTION
+                        developerConnection SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name LICENCE_NAME
+                            url LICENCE_URL
+                            distribution LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id DEVELOPER_ID
+                            name DEVELOPER_NAME
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    signing {
+        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
+        sign configurations.archives
+    }
+
+    if (project.getPlugins().hasPlugin('com.android.application') ||
+            project.getPlugins().hasPlugin('com.android.library')) {
+        task install(type: Upload, dependsOn: assemble) {
+            repositories.mavenInstaller {
+                configuration = configurations.archives
+
+                pom.groupId = GROUP
+                pom.artifactId = ARTIFACT_ID
+                pom.version = VERSION
+
+                pom.project {
+                    name NAME
+                    packaging PACKAGING
+                    description DESCRIPTION
+                    url PROJECT_URL
+
+                    scm {
+                        url SCM_URL
+                        connection SCM_CONNECTION
+                        developerConnection SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name LICENCE_NAME
+                            url LICENCE_URL
+                            distribution LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id DEVELOPER_ID
+                            name DEVELOPER_NAME
+                        }
+                    }
+                }
+            }
+        }
+
+        task androidJavadocs(type: Javadoc) {
+            source = android.sourceSets.main.java.source
+            classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        }
+
+        task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+            classifier = 'javadoc'
+            from androidJavadocs.destinationDir
+        }
+
+        task androidSourcesJar(type: Jar) {
+            classifier = 'sources'
+            from android.sourceSets.main.java.source
+        }
+    } else {
+        install {
+            repositories.mavenInstaller {
+                pom.groupId = GROUP
+                pom.artifactId = ARTIFACT_ID
+                pom.version = VERSION
+
+                pom.project {
+                    name NAME
+                    packaging PACKAGING
+                    description DESCRIPTION
+                    url PROJECT_URL
+
+                    scm {
+                        url SCM_URL
+                        connection SCM_CONNECTION
+                        developerConnection SCM_DEV_CONNECTION
+                    }
+
+                    licenses {
+                        license {
+                            name LICENCE_NAME
+                            url LICENCE_URL
+                            distribution LICENCE_DIST
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id DEVELOPER_ID
+                            name DEVELOPER_NAME
+                        }
+                    }
+                }
+            }
+        }
+
+        task sourcesJar(type: Jar, dependsOn: classes) {
+            classifier = 'sources'
+            from sourceSets.main.allSource
+        }
+
+        task javadocJar(type: Jar, dependsOn: javadoc) {
+            classifier = 'javadoc'
+            from javadoc.destinationDir
+        }
+    }
+
+    if (JavaVersion.current().isJava8Compatible()) {
+        allprojects {
+            tasks.withType(Javadoc) {
+                options.addStringOption('Xdoclint:none', '-quiet')
+            }
+        }
+    }
+
+    artifacts {
+        if (project.getPlugins().hasPlugin('com.android.application') ||
+                project.getPlugins().hasPlugin('com.android.library')) {
+            archives androidSourcesJar
+// TODO: fix javadoc task
+//            archives androidJavadocsJar
+        } else {
+            archives sourcesJar
+            archives javadocJar
+        }
+    }
+}

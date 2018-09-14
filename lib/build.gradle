@@ -3,6 +3,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+
 android {
     compileSdkVersion 28
     buildToolsVersion "28.0.2"
@@ -10,8 +14,9 @@ android {
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 28
+
         versionCode 1
-        versionName "0.0.1-alpha01"
+        versionName VERSION
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,3 +48,5 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
 }
+
+apply from: '../gradle/mvn_deploy.gradle'
