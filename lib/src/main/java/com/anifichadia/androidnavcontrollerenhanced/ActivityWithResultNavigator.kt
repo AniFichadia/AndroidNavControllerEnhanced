@@ -9,6 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.AttributeSet
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityOptionsCompat
 import androidx.core.content.res.getIntegerOrThrow
 import androidx.core.content.res.use
 import androidx.fragment.app.Fragment
@@ -45,8 +47,7 @@ import java.util.regex.Pattern
 @Navigator.Name("activity")
 open class ActivityWithResultNavigator private constructor(
         private val hostActivity: FragmentActivity
-) : ActivityNavigator(hostActivity),
-        OnNavigatedListener {
+) : ActivityNavigator(hostActivity), OnNavigatedListener {
 
     companion object {
         private const val EXTRA_NAV_SOURCE = "android-support-navigation:ActivityNavigator:source"
@@ -76,7 +77,7 @@ open class ActivityWithResultNavigator private constructor(
         return Destination(this)
     }
 
-    override fun navigate(destination: ActivityNavigator.Destination, args: Bundle?, navOptions: NavOptions?) {
+    override fun navigate(destination: ActivityNavigator.Destination, args: Bundle?, navOptions: NavOptions?, navigatorExtras: Navigator.Extras?) {
         if (destination.intent == null) {
             throw IllegalStateException("Destination ${destination.id} does not have an Intent set.")
         }
@@ -86,10 +87,10 @@ open class ActivityWithResultNavigator private constructor(
             intent.putExtras(it)
             val dataPattern = destination.dataPattern
             if (!TextUtils.isEmpty(dataPattern)) {
-                // Fill in the data pattern with the it to build a valid URI
+                // Fill in the data pattern with the args to build a valid URI
                 val data = StringBuffer()
                 val fillInPattern = Pattern.compile("\\{(.+?)\\}")
-                val matcher = fillInPattern.matcher(dataPattern!!)
+                val matcher = fillInPattern.matcher(dataPattern)
                 while (matcher.find()) {
                     val argName = matcher.group(1)
                     if (it.containsKey(argName)) {
@@ -104,21 +105,18 @@ open class ActivityWithResultNavigator private constructor(
             }
         }
 
-        navOptions?.let {
-            if (it.shouldClearTask()) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            }
-
-            if (it.shouldLaunchDocument() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-            } else if (context !is Activity) {
-                // If we're not launching from an Activity context we have to launch in a new task.
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-
-            if (it.shouldLaunchSingleTop()) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
+        if (navOptions != null && navOptions.shouldClearTask()) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        }
+        if (navOptions != null && navOptions.shouldLaunchDocument()
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+        } else if (context !is Activity) {
+            // If we're not launching from an Activity context we have to launch in a new task.
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        if (navOptions != null && navOptions.shouldLaunchSingleTop()) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
 
         val hostIntent = hostActivity.intent
@@ -129,9 +127,22 @@ open class ActivityWithResultNavigator private constructor(
             }
         }
 
+
         val destId = destination.id
         intent.putExtra(EXTRA_NAV_CURRENT, destId)
         NavOptions.addPopAnimationsToIntent(intent, navOptions)
+
+
+        navOptions?.let {
+            var enterAnim = it.enterAnim
+            var exitAnim = it.exitAnim
+            if (enterAnim != -1 || exitAnim != -1) {
+                enterAnim = if (enterAnim != -1) enterAnim else 0
+                exitAnim = if (exitAnim != -1) exitAnim else 0
+                hostActivity.overridePendingTransition(enterAnim, exitAnim)
+            }
+        }
+
 
         if (destination is Destination && destination.requestCode != null) {
             val requestCode: Int = destination.requestCode!!
@@ -146,23 +157,21 @@ open class ActivityWithResultNavigator private constructor(
                 if (activeFragment != null) {
                     hostActivity.startActivityFromFragment(activeFragment, intent, requestCode, args)
                 } else {
-                    hostActivity.startActivity(intent)
+                    if (navigatorExtras is Extras) {
+                        ActivityCompat.startActivity(hostActivity, intent, navigatorExtras.activityOptions.toBundle())
+                    } else {
+                        hostActivity.startActivity(intent)
+                    }
                 }
             } else {
-                hostActivity.startActivityForResult(intent, requestCode, args)
+                if (navigatorExtras is Extras) {
+                    ActivityCompat.startActivityForResult(hostActivity, intent, requestCode, navigatorExtras.activityOptions.toBundle())
+                } else {
+                    ActivityCompat.startActivityForResult(hostActivity, intent, requestCode, args)
+                }
             }
         } else {
             hostActivity.startActivity(intent)
-        }
-
-        navOptions?.let {
-            var enterAnim = it.enterAnim
-            var exitAnim = it.exitAnim
-            if (enterAnim != -1 || exitAnim != -1) {
-                enterAnim = if (enterAnim != -1) enterAnim else 0
-                exitAnim = if (exitAnim != -1) exitAnim else 0
-                hostActivity.overridePendingTransition(enterAnim, exitAnim)
-            }
         }
 
         // You can't pop the back stack from the caller of a new Activity,
@@ -220,4 +229,7 @@ open class ActivityWithResultNavigator private constructor(
             return this
         }
     }
+
+
+    class Extras(val activityOptions: ActivityOptionsCompat) : ActivityNavigator.Extras(activityOptions)
 }
