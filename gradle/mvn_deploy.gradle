@@ -105,43 +105,43 @@ afterEvaluate { project ->
 
     if (project.getPlugins().hasPlugin('com.android.application') ||
             project.getPlugins().hasPlugin('com.android.library')) {
-        task install(type: Upload, dependsOn: assemble) {
-            repositories.mavenInstaller {
-                configuration = configurations.archives
-
-                pom.groupId = GROUP
-                pom.artifactId = ARTIFACT_ID
-                pom.version = VERSION
-
-                pom.project {
-                    name NAME
-                    packaging PACKAGING
-                    description DESCRIPTION
-                    url PROJECT_URL
-
-                    scm {
-                        url SCM_URL
-                        connection SCM_CONNECTION
-                        developerConnection SCM_DEV_CONNECTION
-                    }
-
-                    licenses {
-                        license {
-                            name LICENCE_NAME
-                            url LICENCE_URL
-                            distribution LICENCE_DIST
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            id DEVELOPER_ID
-                            name DEVELOPER_NAME
-                        }
-                    }
-                }
-            }
-        }
+//        task install(type: Upload, dependsOn: assemble) {
+//            repositories.mavenInstaller {
+//                configuration = configurations.archives
+//
+//                pom.groupId = GROUP
+//                pom.artifactId = ARTIFACT_ID
+//                pom.version = VERSION
+//
+//                pom.project {
+//                    name NAME
+//                    packaging PACKAGING
+//                    description DESCRIPTION
+//                    url PROJECT_URL
+//
+//                    scm {
+//                        url SCM_URL
+//                        connection SCM_CONNECTION
+//                        developerConnection SCM_DEV_CONNECTION
+//                    }
+//
+//                    licenses {
+//                        license {
+//                            name LICENCE_NAME
+//                            url LICENCE_URL
+//                            distribution LICENCE_DIST
+//                        }
+//                    }
+//
+//                    developers {
+//                        developer {
+//                            id DEVELOPER_ID
+//                            name DEVELOPER_NAME
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         task androidJavadocs(type: Javadoc) {
             source = android.sourceSets.main.java.source
